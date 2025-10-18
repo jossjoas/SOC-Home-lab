@@ -1,143 +1,114 @@
-Build a Mini-SOC with Wazuh — Full Deep-Dive Lab Guide
-1. Components & Topology
+🛡️ Build a Mini-SOC with Wazuh — Full Deep-Dive Lab Guide
+🧭 1. Components & Topology
 
-Integrated components:
+You’ll integrate:
 
-Ubuntu VM — Wazuh Manager, Elasticsearch, Kibana
+🐧 Ubuntu VM — Wazuh Manager, Elasticsearch, Kibana
 
-Windows Server 2022 — Active Directory, Sysmon, Wazuh Agent
+🖥️ Windows Server 2022 — AD, Sysmon, Wazuh Agent
 
-Windows Workstation — Wazuh Agent + Sysmon
+💻 Windows Workstation — Wazuh Agent + Sysmon
 
-pfSense — Firewall logs forwarded to Wazuh via Syslog
+🧱 pfSense — Firewall logs via Syslog
 
-CrowdSec (optional integration)
+🧠 CrowdSec (optional) — Behavioral detection
 
-VirtualBox as the hypervisor
+🧰 VirtualBox — Hypervisor
 
-Internal Network: GREEN (SOC communications)
+🟢 Internal Network (GREEN) — SOC traffic
 
-2. Creating the Ubuntu Wazuh Manager VM
-Step 2.1: Create Ubuntu VM in VirtualBox
+🖥️ 2. Creating the Ubuntu Wazuh Manager VM
+🧱 Step 2.1: Create Ubuntu VM
 
-Download Ubuntu Server 22.04 LTS (64-bit):
-https://ubuntu.com/download/server
+📥 Download Ubuntu Server 22.04 LTS:
+👉 https://ubuntu.com/download/server
 
-Create a new VM:
+⚙️ VM Configuration:
 
 Name: Wazuh-Manager
 
-Type: Linux
+Type: Linux / Ubuntu (64-bit)
 
-Version: Ubuntu (64-bit)
+RAM: 4–8 GB
 
-Allocate resources:
+CPU: 2–4 cores
 
-Memory: 4 GB minimum (6–8 GB recommended)
+Disk: 40 GB (VDI)
 
-CPU: 2 minimum (4 recommended)
+🌐 Networking:
 
-Disk: 40 GB (VDI, dynamically allocated)
+Adapter 1: Internal Network (GREEN)
 
-Networking:
+Adapter 2: (Optional) NAT / Bridged
 
-Adapter 1: Internal Network GREEN
+💿 Mount ISO in VirtualBox (Settings → Storage).
 
-Adapter 2: (Optional) NAT or Bridged
-
-Mount ISO in VirtualBox under Settings > Storage.
-
-Step 2.2: Install Ubuntu
-
-Boot VM and install Ubuntu Server.
-
-Configure:
+🧾 Step 2.2: Install Ubuntu
 
 Language: English
 
-Network: Internal IP or static if preferred
-
 Hostname: wazuh
 
-User: wazuhadmin (set your password)
+User: wazuhadmin (set password)
 
-Enable OpenSSH server
+Enable OpenSSH
 
 Reboot and update:
 
 sudo apt update && sudo apt upgrade -y
 
-3. Installing Wazuh All-In-One Stack
-Step 3.1: Install Wazuh with the Official Script
+⚡ 3. Installing Wazuh All-In-One Stack
+🧰 Step 3.1: Installation Script
 
-This will install:
-
-Wazuh Manager
-
-Filebeat
-
-Elasticsearch
-
-Kibana
-
-Wazuh Dashboards
+Installs Wazuh Manager, Filebeat, Elasticsearch, Kibana, Dashboards:
 
 curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
 bash wazuh-install.sh -a
 
 
-You will be prompted to set the admin password during installation.
+📝 Set the admin password when prompted.
 
-Step 3.2: Verify Installation
+🔍 Step 3.2: Access Dashboard
 
-Access: https://<wazuh-VM-IP>/
+URL: https://<WAZUH-VM-IP>/
 
-Login:
+👤 User: admin
 
-Username: admin
+🔑 Password: chosen during install
 
-Password: (set during installation)
+🧑‍💻 4. Installing Wazuh Agents on Windows
+📥 Step 4.1: Download
 
-4. Installing Wazuh Agents on Windows Systems
-Step 4.1: Download Windows Agent
+👉 https://packages.wazuh.com/
 
-Download the latest MSI from:
-https://packages.wazuh.com/
-
-Step 4.2: Install Agent
+🧭 Step 4.2: Install
 
 GUI:
 
-Run the MSI
-
-Wazuh Manager IP: 192.168.100.100 (example)
+Manager IP: 192.168.100.100
 
 Agent name: WIN-SERVER or WIN-WS01
 
-CLI (Silent Install):
+CLI Silent Install:
 
 msiexec /i "wazuh-agent-4.7.x.msi" /qn WAZUH_MANAGER="192.168.100.100" WAZUH_AGENT_NAME="WIN-SERVER"
 
-Step 4.3: Start & Register Agent
+🚀 Step 4.3: Start & Register Agent
 net start wazuh
 
 
-Confirm connection in the Wazuh dashboard under Agents.
+✅ Check in Wazuh Dashboard → Agents.
 
-5. Enabling Log Sources & Monitoring
-Step 5.1: Install Sysmon on Windows
+🪓 5. Enabling Sysmon & Event Channels
+🧰 Step 5.1: Install Sysmon
 
-Download Sysmon:
-https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon
+Download: Sysinternals Sysmon
 
-Use a recommended config (e.g., SwiftOnSecurity):
-https://github.com/SwiftOnSecurity/sysmon-config
-
-Install:
+Use community config: SwiftOnSecurity
 
 .\sysmon.exe -accepteula -i sysmonconfig.xml
 
-Step 5.2: Enable Windows Event Channels on Wazuh Manager
+🧭 Step 5.2: Configure Event Channels
 
 Edit:
 
@@ -160,12 +131,10 @@ Restart:
 
 sudo systemctl restart wazuh-manager
 
-6. Integrating pfSense Logs
-Step 6.1: Configure pfSense Remote Syslog
+🌐 6. pfSense Integration
+🛜 Step 6.1: Remote Syslog in pfSense
 
-Go to Status > System Logs > Settings
-
-Enable Remote Logging:
+✅ Enable Remote Logging
 
 IP: Wazuh Manager (GREEN)
 
@@ -173,9 +142,9 @@ Port: 514 UDP
 
 Facility: local0
 
-Logs: System, Firewall, DHCP, etc.
+Logs: System, Firewall, DHCP…
 
-Step 6.2: Configure rsyslog on Ubuntu
+🐧 Step 6.2: Configure rsyslog on Ubuntu
 sudo apt install rsyslog -y
 sudo nano /etc/rsyslog.d/10-pfsense.conf
 
@@ -194,36 +163,41 @@ Restart:
 
 sudo systemctl restart rsyslog
 
-Step 6.3: Monitor pfSense Logs in Wazuh
+🛡️ Step 6.3: Add to Wazuh
 sudo nano /var/ossec/etc/ossec.conf
-
-
-Add:
 
 <localfile>
   <log_format>syslog</log_format>
   <location>/var/log/pfsense.log</location>
 </localfile>
 
-
-Restart:
-
 sudo systemctl restart wazuh-manager
 
-7. Verifying Logs and Alerts
+🧪 7. Verify Logs & Alerts
 
-In the Wazuh Dashboard:
+📊 In Wazuh Dashboard:
 
 Agents → Select agent → Security Events
 
-Check Sysmon logs, logons, failed attempts, etc.
+Sysmon logs
 
-Security Events → Review detections:
+Logons
+
+Failed attempts
+
+Security Events:
 
 RDP brute force
 
-PowerShell execution
+PowerShell exec
 
-Suspicious processes
+Suspicious child processes
 
-Sysmon Events (IDs 1, 3, 10, etc.)
+Sysmon Events (ID 1, 3, 10…)
+
+🔥 8. Detection & Response Testing
+🧪 Action	🕵️ Detection
+PowerShell execution	Sysmon Event ID 1
+Brute-force logins	Windows Event ID 4625
+File modification	Sysmon FileCreate
+Ransomware activity	Wazuh rules & alerts
